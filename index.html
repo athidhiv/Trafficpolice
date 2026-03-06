@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VR Traffic Police Training</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    #hud {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid #00ff88;
+      border-radius: 12px;
+      padding: 10px 24px;
+      color: #00ff88;
+      font-size: 15px;
+      z-index: 999;
+      text-align: center;
+      pointer-events: none;
+      backdrop-filter: blur(6px);
+    }
+
+    #hud h2 {
+      margin: 0 0 4px;
+      font-size: 17px;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+
+    #panel {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid #0af;
+      border-radius: 14px;
+      padding: 12px 28px;
+      color: #0af;
+      font-size: 14px;
+      z-index: 999;
+      text-align: center;
+      backdrop-filter: blur(6px);
+      min-width: 320px;
+    }
+
+    #panel .status-label {
+      font-weight: bold;
+      color: #fff;
+    }
+
+    #panel #officer-status {
+      font-size: 15px;
+      color: #ffe033;
+      margin-top: 4px;
+    }
+
+    #controls {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 999;
+    }
+
+    #controls button {
+      background: rgba(0, 0, 0, 0.7);
+      color: #00ff88;
+      border: 1px solid #00ff88;
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s;
+    }
+
+    #controls button:hover {
+      background: rgba(0, 255, 136, 0.2);
+    }
+
+    #legend {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid #555;
+      border-radius: 10px;
+      padding: 10px 16px;
+      color: #ccc;
+      font-size: 12px;
+      z-index: 999;
+      backdrop-filter: blur(4px);
+    }
+
+    #legend div {
+      margin: 3px 0;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HUD -->
+  <div id="hud">
+    <h2>🚔 VR TRAFFIC POLICE TRAINING</h2>
+    <span id="phase-label">Phase: Initializing...</span>
+  </div>
+
+  <!-- Bottom Panel -->
+  <div id="panel">
+    <div class="status-label">Officer Command</div>
+    <div id="officer-status">Officer is taking position...</div>
+    <div style="margin-top:6px; color:#aaa; font-size:12px;">Use mouse/touch to look around &bull; VR headset supported
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div id="controls">
+    <button onclick="setPhase('ns')">▶ Allow N-S Traffic</button>
+    <button onclick="setPhase('ew')">▶ Allow E-W Traffic</button>
+    <button onclick="setPhase('stop')">✋ STOP ALL</button>
+    <button onclick="setPhase('ped')">🚶 Pedestrian Crossing</button>
+  </div>
+
+  <!-- Legend -->
+  <div id="legend">
+    <div><span class="dot" style="background:#e74c3c"></span>Stop / Red Light</div>
+    <div><span class="dot" style="background:#f1c40f"></span>Caution / Amber</div>
+    <div><span class="dot" style="background:#2ecc71"></span>Go / Green Light</div>
+    <div><span class="dot" style="background:#3498db"></span>Pedestrian Walk</div>
+    <hr style="border-color:#444; margin:6px 0">
+    <div style="color:#ffe033; font-size:11px; font-weight:bold;">VR Hand Gestures</div>
+    <div>✋ Right raised → N-S GO</div>
+    <div>🤚 Left raised → E-W GO</div>
+    <div>🙌 Both raised → ALL STOP</div>
+    <div>🤌 Right pinch → 🚶 Pedestrian</div>
+  </div>
+
+  <a-scene fog="type: linear; color: #b0d4ef; near: 60; far: 120" shadow="type: pcf" vr-mode-ui="enabled: true">
+
+    <!-- ======= SKY & ENVIRONMENT ======= -->
+    <a-sky color="#87CEEB"></a-sky>
+
+    <!-- Sun -->
+    <a-light type="directional" position="10 20 5" intensity="1.0" color="#ffffee" cast-shadow="true"></a-light>
+    <a-light type="ambient" color="#aaccff" intensity="0.6"></a-light>
+
+    <!-- ======= GROUND ======= -->
+    <a-plane position="0 0 0" rotation="-90 0 0" width="120" height="120" color="#556B2F"
+      shadow="receive: true"></a-plane>
+
+    <!-- ======= ROADS ======= -->
+    <!-- N-S road -->
+    <a-plane position="0 0.01 0" rotation="-90 0 0" width="12" height="120" color="#444"
+      shadow="receive: true"></a-plane>
+    <!-- E-W road -->
+    <a-plane position="0 0.01 0" rotation="-90 0 0" width="120" height="12" color="#444"
+      shadow="receive: true"></a-plane>
+
+    <!-- Centre box -->
+    <a-plane position="0 0.015 0" rotation="-90 0 0" width="12" height="12" color="#444"></a-plane>
+
+    <!-- ======= LANE MARKINGS (dashed centre lines) ======= -->
+    <!-- NS dashes -->
+    <a-entity id="ns-dashes"></a-entity>
+    <!-- EW dashes -->
+    <a-entity id="ew-dashes"></a-entity>
+
+    <!-- ======= ZEBRA CROSSINGS ======= -->
+    <!-- North zebra: sits between stop-line (7.5) and sidewalk (12), centred at 9.75 -->
+    <a-entity id="zebra-north" position="0 0.02 9.75"></a-entity>
+    <!-- South zebra -->
+    <a-entity id="zebra-south" position="0 0.02 -9.75"></a-entity>
+    <!-- East zebra (rotate 90 Y so stripes run N-S across E road) -->
+    <a-entity id="zebra-east" position="9.75 0.02 0" rotation="0 90 0"></a-entity>
+    <!-- West zebra -->
+    <a-entity id="zebra-west" position="-9.75 0.02 0" rotation="0 90 0"></a-entity>
+
+    <!-- ======= STOP LINES (at ±7.5, marking the junction mouth) ======= -->
+    <a-plane position="0 0.018  7.5" rotation="-90 0 0" width="12" height="0.4" color="#fff" opacity="0.9"></a-plane>
+    <a-plane position="0 0.018 -7.5" rotation="-90 0 0" width="12" height="0.4" color="#fff" opacity="0.9"></a-plane>
+    <a-plane position=" 7.5 0.018 0" rotation="-90 0 0" width="0.4" height="12" color="#fff" opacity="0.9"></a-plane>
+    <a-plane position="-7.5 0.018 0" rotation="-90 0 0" width="0.4" height="12" color="#fff" opacity="0.9"></a-plane>
+
+    <!-- ======= TRAFFIC LIGHTS ======= -->
+    <!-- NE Corner -->
+    <a-entity id="tl-ne" position="7 0 7" traffic-light="dir:ne"></a-entity>
+    <!-- NW Corner -->
+    <a-entity id="tl-nw" position="-7 0 7" traffic-light="dir:nw"></a-entity>
+    <!-- SE Corner -->
+    <a-entity id="tl-se" position="7 0 -7" traffic-light="dir:se"></a-entity>
+    <!-- SW Corner -->
+    <a-entity id="tl-sw" position="-7 0 -7" traffic-light="dir:sw"></a-entity>
+
+    <!-- ======= BUILDINGS (background) ======= -->
+    <!-- NE -->
+    <a-box position="22 5 22" width="12" depth="12" height="14" color="#8B7355"
+      shadow="cast:true; receive:true"></a-box>
+    <a-box position="22 8 22" width="10" depth="10" height="8" color="#A0907A"></a-box>
+    <!-- NW -->
+    <a-box position="-22 4 22" width="14" depth="10" height="10" color="#6B7B8D"
+      shadow="cast:true; receive:true"></a-box>
+    <!-- SE -->
+    <a-box position="22 6 -22" width="10" depth="14" height="16" color="#7A8B6B"
+      shadow="cast:true; receive:true"></a-box>
+    <!-- SW -->
+    <a-box position="-22 5 -22" width="12" depth="12" height="12" color="#8D7A6B"
+      shadow="cast:true; receive:true"></a-box>
+    <!-- Extra buildings -->
+    <a-box position="30 3 5" width="8" depth="8" height="8" color="#9B8B7A"></a-box>
+    <a-box position="-30 5 -5" width="10" depth="8" height="12" color="#7A8B9B"></a-box>
+    <a-box position="5 2 30" width="8" depth="12" height="6" color="#8B9B7A"></a-box>
+    <a-box position="-5 4 -30" width="12" depth="8" height="10" color="#9B7A8B"></a-box>
+
+    <!-- ======= TREES ======= -->
+    <a-entity id="tree1" position="14 0 14">
+      <a-cylinder height="2" radius="0.2" color="#5D4037" position="0 1 0"></a-cylinder>
+      <a-sphere radius="2" color="#2e7d32" position="0 3.5 0"></a-sphere>
+    </a-entity>
+    <a-entity id="tree2" position="-14 0 14">
+      <a-cylinder height="2" radius="0.2" color="#5D4037" position="0 1 0"></a-cylinder>
+      <a-sphere radius="2" color="#388e3c" position="0 3.5 0"></a-sphere>
+    </a-entity>
+    <a-entity id="tree3" position="14 0 -14">
+      <a-cylinder height="2" radius="0.2" color="#5D4037" position="0 1 0"></a-cylinder>
+      <a-sphere radius="2" color="#1b5e20" position="0 3.5 0"></a-sphere>
+    </a-entity>
+    <a-entity id="tree4" position="-14 0 -14">
+      <a-cylinder height="2" radius="0.2" color="#5D4037" position="0 1 0"></a-cylinder>
+      <a-sphere radius="2" color="#33691e" position="0 3.5 0"></a-sphere>
+    </a-entity>
+    <a-entity position="20 0 -2">
+      <a-cylinder height="2.5" radius="0.2" color="#5D4037" position="0 1.25 0"></a-cylinder>
+      <a-sphere radius="1.5" color="#2e7d32" position="0 3.5 0"></a-sphere>
+    </a-entity>
+    <a-entity position="-20 0 2">
+      <a-cylinder height="2.5" radius="0.2" color="#5D4037" position="0 1.25 0"></a-cylinder>
+      <a-sphere radius="1.5" color="#43a047" position="0 3.5 0"></a-sphere>
+    </a-entity>
+
+    <!-- ======= SIDEWALKS ======= -->
+    <a-plane position="16 0.005 0" rotation="-90 0 0" width="8" height="120" color="#bdbdbd"></a-plane>
+    <a-plane position="-16 0.005 0" rotation="-90 0 0" width="8" height="120" color="#bdbdbd"></a-plane>
+    <a-plane position="0 0.005 16" rotation="-90 0 0" width="120" height="8" color="#bdbdbd"></a-plane>
+    <a-plane position="0 0.005 -16" rotation="-90 0 0" width="120" height="8" color="#bdbdbd"></a-plane>
+
+    <!-- ======= POLICE OFFICER ======= -->
+    <!-- Officer stands at centre of junction, faces users -->
+    <a-entity id="officer" position="0 0 0" rotation="0 0 0" officer-controller>
+      <!-- Legs -->
+      <a-box id="leg-l" position="-0.18 0.5 0" width="0.22" depth="0.22" height="1.0" color="#1a237e"></a-box>
+      <a-box id="leg-r" position=" 0.18 0.5 0" width="0.22" depth="0.22" height="1.0" color="#1a237e"></a-box>
+      <!-- Torso -->
+      <a-box position="0 1.35 0" width="0.6" depth="0.35" height="0.8" color="#1565c0"></a-box>
+      <!-- Badge -->
+      <a-cylinder position="0 1.5 0.18" radius="0.07" height="0.04" color="#ffd700" rotation="90 0 0"></a-cylinder>
+      <!-- Left Arm -->
+      <a-entity id="arm-l">
+        <a-box position="-0.48 1.4 0" width="0.22" depth="0.22" height="0.75" color="#1565c0" rotation="0 0 0"
+          id="arm-l-box"></a-box>
+        <!-- Glove -->
+        <a-sphere position="-0.48 1.02 0" radius="0.12" color="#fff"></a-sphere>
+      </a-entity>
+      <!-- Right Arm -->
+      <a-entity id="arm-r">
+        <a-box position="0.48 1.4 0" width="0.22" depth="0.22" height="0.75" color="#1565c0" rotation="0 0 0"
+          id="arm-r-box"></a-box>
+        <!-- Glove -->
+        <a-sphere position="0.48 1.02 0" radius="0.12" color="#fff"></a-sphere>
+      </a-entity>
+      <!-- Neck -->
+      <a-cylinder position="0 1.82 0" radius="0.1" height="0.15" color="#e8b89a"></a-cylinder>
+      <!-- Head -->
+      <a-sphere position="0 2.1 0" radius="0.25" color="#e8b89a"></a-sphere>
+      <!-- Cap (hat) -->
+      <a-cylinder position="0 2.35 0" radius="0.28" height="0.08" color="#0d1b2a"></a-cylinder>
+      <a-cylinder position="0 2.42 0" radius="0.2" height="0.2" color="#1a237e"></a-cylinder>
+      <a-box position="0 2.35 -0.28" width="0.6" depth="0.04" height="0.04" color="#0d1b2a"></a-box>
+      <!-- Whistle -->
+      <a-cylinder position="0.05 1.92 0.18" radius="0.025" height="0.12" color="#ffd700" rotation="90 0 0"></a-cylinder>
+      <!-- Belt -->
+      <a-box position="0 0.95 0" width="0.64" depth="0.38" height="0.1" color="#ffd700"></a-box>
+    </a-entity>
+
+    <!-- ======= VEHICLES ======= -->
+    <!-- North approaching (travels south: +Z to -Z on lane x=-3)
+         stopZ:9 → car halts at Z≈9, well before the stop line at 7.5 -->
+    <a-entity id="car-n1" position="-3 0 55"
+      vehicle="lane:ns-left; from:55; to:-55; speed:0.04; stopZ:9; pedStopZ:12; dir:neg"></a-entity>
+    <!-- Second north car staggered -->
+    <a-entity id="car-n2" position="-3 0 30"
+      vehicle="lane:ns-left; from:55; to:-55; speed:0.033; stopZ:9; pedStopZ:12; dir:neg"></a-entity>
+
+    <!-- South approaching (travels north: -Z to +Z on lane x=3) -->
+    <a-entity id="car-s1" position="3 0 -55"
+      vehicle="lane:ns-right; from:-55; to:55; speed:0.038; stopZ:-9; pedStopZ:-12; dir:pos"></a-entity>
+    <a-entity id="car-s2" position="3 0 -30"
+      vehicle="lane:ns-right; from:-55; to:55; speed:0.03; stopZ:-9; pedStopZ:-12; dir:pos"></a-entity>
+
+    <!-- East approaching (travels west: +X to -X on lane z=-3)
+         stopZ:9 → car halts at X≈9, before the E stop line at 7.5 -->
+    <a-entity id="car-e1" position="55 0 -3"
+      vehicle="lane:ew-right; from:55; to:-55; speed:0.036; stopZ:9; pedStopZ:12; dir:neg; axis:x"></a-entity>
+    <a-entity id="car-e2" position="30 0 -3"
+      vehicle="lane:ew-right; from:55; to:-55; speed:0.028; stopZ:9; pedStopZ:12; dir:neg; axis:x"></a-entity>
+
+    <!-- West approaching (travels east: -X to +X on lane z=3)
+         stopZ:-9 → car halts at X≈-9 before the W stop line at -7.5 -->
+    <a-entity id="car-w1" position="-55 0 3"
+      vehicle="lane:ew-left; from:-55; to:55; speed:0.04; stopZ:-9; pedStopZ:-12; dir:pos; axis:x"></a-entity>
+    <a-entity id="car-w2" position="-30 0 3"
+      vehicle="lane:ew-left; from:-55; to:55; speed:0.032; stopZ:-9; pedStopZ:-12; dir:pos; axis:x"></a-entity>
+
+    <!-- Trucks -->
+    <a-entity id="truck-n1" position="-3 0 45"
+      vehicle="lane:ns-left; from:55; to:-55; speed:0.022; stopZ:9; pedStopZ:12; dir:neg; type:truck"></a-entity>
+    <a-entity id="truck-e1" position="45 0 -3"
+      vehicle="lane:ew-right; from:55; to:-55; speed:0.02; stopZ:9; pedStopZ:12; dir:neg; axis:x; type:truck"></a-entity>
+
+    <!-- ======= PEDESTRIANS =======
+         Placed on the zebra crossings at z=±9.75 (matching new zebra position)
+         Walk range ±13 keeps them on the sidewalk (sidewalk at ±12–16) -->
+    <a-entity id="ped1" position="13 0 9.75"
+      pedestrian="crossAxis:x; from:13; to:-13; crossZ:9.75; speed:0.018"></a-entity>
+    <a-entity id="ped2" position="-13 0 -9.75"
+      pedestrian="crossAxis:x; from:-13; to:13; crossZ:-9.75; speed:0.015"></a-entity>
+
+    <!-- ======= CAMERA RIG (first-person at officer centre) ======= -->
+    <!-- In non-VR the rig sits slightly back for an overview; in VR it snaps to officer eye level -->
+    <a-entity id="camera-rig" position="0 0 0" gesture-controller>
+
+      <!-- Non-VR overview camera -->
+      <a-entity id="overview-cam" position="0 5 18" rotation="-15 0 0">
+        <a-camera id="main-camera" look-controls wasd-controls></a-camera>
+      </a-entity>
+
+      <!-- VR first-person camera at eye level -->
+      <a-entity id="vr-head" position="0 1.6 0">
+        <!-- Hand controllers (visible only in WebXR with hand tracking) -->
+        <a-entity id="left-hand" hand-tracking-controls="hand: left; modelStyle: dots; color: #ffddbb">
+        </a-entity>
+        <a-entity id="right-hand" hand-tracking-controls="hand: right; modelStyle: dots; color: #ffddbb">
+        </a-entity>
+
+        <!-- In-VR floating HUD (billboard, shown only in VR) -->
+        <a-entity id="vr-hud" position="0 0.12 -0.9" visible="false">
+          <a-plane width="1.5" height="0.58" color="#001a00" opacity="0.82" material="transparent: true"></a-plane>
+          <a-text id="vr-phase-text" value="Phase: N-S GO" align="center" color="#00ff88" width="1.3"
+            position="0 0.1 0.01"></a-text>
+          <a-text id="vr-hint-text" value="✋R=N-S  🤚L=E-W  🙌Both=STOP  🤌Pinch=Ped" align="center" color="#88ccff"
+            width="1.1" position="0 -0.1 0.01" wrap-count="42"></a-text>
+        </a-entity>
+      </a-entity>
+
+    </a-entity>
+
+  </a-scene>
+
+  <script>
+    // ==========================================
+    //  GLOBALS & PHASE STATE
+    // ==========================================
+    let currentPhase = 'ns'; // ns | ew | stop | ped
+    const phaseLabel = document.getElementById('phase-label');
+    const officerStatus = document.getElementById('officer-status');
+    let vrActive = false;
+
+    const phaseMessages = {
+      ns: { label: 'Phase: North-South GREEN', status: '🤚 Officer signals: E-W STOP  |  ✅ N-S GO' },
+      ew: { label: 'Phase: East-West GREEN', status: '✅ Officer signals: E-W GO  |  🤚 N-S STOP' },
+      stop: { label: 'Phase: ALL STOP', status: '✋ Officer signals: ALL VEHICLES STOP' },
+      ped: { label: 'Phase: Pedestrian Crossing', status: '🚶 Officer signals: Pedestrian crossing — vehicles HOLD' },
+    };
+
+    function setPhase(p) {
+      currentPhase = p;
+      phaseLabel.textContent = phaseMessages[p].label;
+      officerStatus.textContent = phaseMessages[p].status;
+      // Broadcast to all traffic light components
+      document.querySelectorAll('[traffic-light]').forEach(el => {
+        el.components['traffic-light'].applyPhase(p);
+      });
+      // Update officer animation (only in non-VR)
+      const officerEl = document.getElementById('officer');
+      if (officerEl && officerEl.components['officer-controller']) {
+        officerEl.components['officer-controller'].setPhase(p);
+      }
+      // Update in-VR HUD text
+      const vrPhaseText = document.getElementById('vr-phase-text');
+      if (vrPhaseText) {
+        const labels = { ns: 'N-S GO  |  E-W STOP', ew: 'E-W GO  |  N-S STOP', stop: 'ALL STOP', ped: '🚶 PEDESTRIAN CROSSING' };
+        vrPhaseText.setAttribute('value', 'Phase: ' + (labels[p] || p));
+      }
+    }
+
+    // Auto-cycle phases every 8 seconds
+    let autoCycleTimer = null;
+    function startAutoCycle() {
+      stopAutoCycle();
+      const seq = ['ns', 'ew', 'ped', 'stop'];
+      let idx = 0;
+      autoCycleTimer = setInterval(() => {
+        idx = (idx + 1) % seq.length;
+        setPhase(seq[idx]);
+      }, 8000);
+    }
+    function stopAutoCycle() {
+      if (autoCycleTimer) { clearInterval(autoCycleTimer); autoCycleTimer = null; }
+    }
+
+    // ==========================================
+    //  ZEBRA CROSSING BUILDER (procedural)
+    // ==========================================
+    AFRAME.registerComponent('zebra-builder', {
+      // width  = span across the road (matches road width = 12)
+      // stripeW = width of each white stripe along the travel direction
+      // gap     = gap between stripes
+      schema: { stripes: { default: 8 }, width: { default: 12 }, stripeW: { default: 0.65 }, gap: { default: 0.45 } },
+      init: function () { this.build(); },
+      build: function () {
+        const d = this.data;
+        // Total span in local X (stripes laid side-by-side along X)
+        const total = d.stripes * d.stripeW + (d.stripes - 1) * d.gap;
+        const start = -total / 2 + d.stripeW / 2;
+        for (let i = 0; i < d.stripes; i++) {
+          const stripe = document.createElement('a-plane');
+          // Each stripe is a narrow panel (stripeW wide) spanning the full road width
+          // Position in local X so rotation:'-90 0 0' lays it flat on ground
+          const x = start + i * (d.stripeW + d.gap);
+          stripe.setAttribute('rotation', '-90 0 0');
+          stripe.setAttribute('width', d.stripeW);   // along travel direction
+          stripe.setAttribute('height', d.width);    // across road
+          stripe.setAttribute('position', `${x} 0.001 0`);
+          stripe.setAttribute('color', '#f0f0f0');
+          stripe.setAttribute('opacity', '0.95');
+          this.el.appendChild(stripe);
+        }
+      }
+    });
+
+    // Apply zebra builders on load
+    document.addEventListener('DOMContentLoaded', () => {
+      ['zebra-north', 'zebra-south', 'zebra-east', 'zebra-west'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('zebra-builder', '');
+      });
+      buildDashes();
+    });
+
+    function buildDashes() {
+      // NS centre dashes
+      const nsEl = document.getElementById('ns-dashes');
+      for (let z = -50; z <= 50; z += 4) {
+        if (Math.abs(z) < 7) continue; // clear at junction
+        const d = document.createElement('a-plane');
+        d.setAttribute('rotation', '-90 0 0');
+        d.setAttribute('width', '0.18');
+        d.setAttribute('height', '2');
+        d.setAttribute('position', `0 0.019 ${z}`);
+        d.setAttribute('color', '#fff');
+        d.setAttribute('opacity', '0.7');
+        nsEl.appendChild(d);
+      }
+      // EW centre dashes
+      const ewEl = document.getElementById('ew-dashes');
+      for (let x = -50; x <= 50; x += 4) {
+        if (Math.abs(x) < 7) continue;
+        const d = document.createElement('a-plane');
+        d.setAttribute('rotation', '-90 0 0');
+        d.setAttribute('width', '2');
+        d.setAttribute('height', '0.18');
+        d.setAttribute('position', `${x} 0.019 0`);
+        d.setAttribute('color', '#fff');
+        d.setAttribute('opacity', '0.7');
+        ewEl.appendChild(d);
+      }
+    }
+
+    // ==========================================
+    //  TRAFFIC LIGHT COMPONENT
+    // ==========================================
+    AFRAME.registerComponent('traffic-light', {
+      schema: { dir: { default: 'ne' } },
+      init: function () {
+        this.build();
+        // Initial phase set after a tick
+        setTimeout(() => this.applyPhase('ns'), 200);
+      },
+      build: function () {
+        const el = this.el;
+        const dir = this.data.dir;
+
+        // Pole
+        const pole = document.createElement('a-cylinder');
+        pole.setAttribute('height', '5');
+        pole.setAttribute('radius', '0.08');
+        pole.setAttribute('color', '#555');
+        pole.setAttribute('position', '0 2.5 0');
+        el.appendChild(pole);
+
+        // Arm
+        const arm = document.createElement('a-cylinder');
+        arm.setAttribute('height', '1.5');
+        arm.setAttribute('radius', '0.06');
+        arm.setAttribute('color', '#555');
+        arm.setAttribute('position', '0 5 0');
+        arm.setAttribute('rotation', '0 0 90');
+        el.appendChild(arm);
+
+        // Housing
+        const housing = document.createElement('a-box');
+        housing.setAttribute('width', '0.45');
+        housing.setAttribute('depth', '0.45');
+        housing.setAttribute('height', '1.4');
+        housing.setAttribute('color', '#222');
+        housing.setAttribute('position', '0 4.5 0');
+        el.appendChild(housing);
+
+        // Lights
+        const colors = ['#c0392b', '#f39c12', '#27ae60'];
+        const positions = [0.45, 0, -0.45];
+        this.bulbs = [];
+        colors.forEach((c, i) => {
+          const bulb = document.createElement('a-sphere');
+          bulb.setAttribute('radius', '0.12');
+          bulb.setAttribute('color', '#333');
+          bulb.setAttribute('position', `0 ${4.5 + positions[i]} 0.23`);
+          bulb.setAttribute('emissive', '#000');
+          el.appendChild(bulb);
+          this.bulbs.push({ el: bulb, onColor: c });
+        });
+
+        // Rotate post toward junction centre
+        const rotations = { ne: '-135', nw: '135', se: '-45', sw: '45' };
+        el.setAttribute('rotation', `0 ${rotations[dir] || '0'} 0`);
+      },
+      applyPhase: function (phase) {
+        const dir = this.data.dir;
+        // Determine if NS or EW corner
+        const isNS = (dir === 'ne' || dir === 'nw' || dir === 'se' || dir === 'sw');
+        // ne/sw control NS traffic; nw/se control EW traffic
+        const controlsNS = (dir === 'ne' || dir === 'sw');
+        const controlsEW = (dir === 'nw' || dir === 'se');
+
+        let state; // 'red' | 'amber' | 'green'
+        if (phase === 'stop' || phase === 'ped') {
+          state = 'red';
+        } else if (phase === 'ns') {
+          state = controlsNS ? 'green' : 'red';
+        } else if (phase === 'ew') {
+          state = controlsEW ? 'green' : 'red';
+        }
+
+        this.setState(state);
+      },
+      setState: function (state) {
+        this.currentState = state;
+        const [red, amber, green] = this.bulbs;
+        // Reset all
+        [red, amber, green].forEach(b => {
+          b.el.setAttribute('color', '#333');
+          b.el.setAttribute('emissive', '#000');
+        });
+        if (state === 'red') {
+          red.el.setAttribute('color', '#e74c3c');
+          red.el.setAttribute('emissive', '#c0392b');
+        } else if (state === 'amber') {
+          amber.el.setAttribute('color', '#f39c12');
+          amber.el.setAttribute('emissive', '#d68910');
+        } else if (state === 'green') {
+          green.el.setAttribute('color', '#2ecc71');
+          green.el.setAttribute('emissive', '#1e8449');
+        }
+      }
+    });
+
+    // ==========================================
+    //  VEHICLE COMPONENT
+    // ==========================================
+    AFRAME.registerComponent('vehicle', {
+      schema: {
+        lane: { default: 'ns-left' },
+        from: { default: 55, type: 'number' },
+        to: { default: -55, type: 'number' },
+        speed: { default: 0.035, type: 'number' },
+        stopZ: { default: 8, type: 'number' },    // stop position at red light
+        pedStopZ: { default: 12, type: 'number' }, // stop position during ped crossing (before zebra)
+        dir: { default: 'neg' },                  // 'neg' = decreasing, 'pos' = increasing
+        axis: { default: 'z' },                   // 'z' | 'x'
+        type: { default: 'car' }
+      },
+      init: function () {
+        this.pos = this.data.from;
+        this.stopped = false;
+        this.build();
+        // stagger start
+        this.waitFrames = Math.floor(Math.random() * 60);
+        this.ready = false;
+      },
+      build: function () {
+        const el = this.el;
+        const isTruck = this.data.type === 'truck';
+        const isEW = this.data.axis === 'x';
+
+        // Random car color
+        const carColors = ['#e74c3c', '#3498db', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#2980b9'];
+        const bodyColor = carColors[Math.floor(Math.random() * carColors.length)];
+
+        const rotate = isEW ? '0 90 0' : '0 0 0';
+
+        if (!isTruck) {
+          // Car body
+          const body = document.createElement('a-box');
+          body.setAttribute('width', '2.2');
+          body.setAttribute('depth', '1.1');
+          body.setAttribute('height', '0.85');
+          body.setAttribute('position', '0 0.55 0');
+          body.setAttribute('color', bodyColor);
+          body.setAttribute('shadow', 'cast:true');
+          el.appendChild(body);
+          // Cabin
+          const cabin = document.createElement('a-box');
+          cabin.setAttribute('width', '1.2');
+          cabin.setAttribute('depth', '1.0');
+          cabin.setAttribute('height', '0.7');
+          cabin.setAttribute('position', '0.1 1.2 0');
+          cabin.setAttribute('color', bodyColor);
+          cabin.setAttribute('opacity', '0.9');
+          el.appendChild(cabin);
+          // Windscreen
+          const ws = document.createElement('a-plane');
+          ws.setAttribute('width', '0.9');
+          ws.setAttribute('height', '0.55');
+          ws.setAttribute('position', '0.71 1.2 0');
+          ws.setAttribute('rotation', '0 90 0');
+          ws.setAttribute('color', '#aee');
+          ws.setAttribute('opacity', '0.85');
+          el.appendChild(ws);
+          // Wheels
+          [[-0.85, 0.3, 0.6], [0.85, 0.3, 0.6], [-0.85, 0.3, -0.6], [0.85, 0.3, -0.6]].forEach(([wx, wy, wz]) => {
+            const w = document.createElement('a-cylinder');
+            w.setAttribute('radius', '0.3');
+            w.setAttribute('height', '0.18');
+            w.setAttribute('color', '#111');
+            w.setAttribute('rotation', '0 0 90');
+            w.setAttribute('position', `${wx} ${wy} ${wz}`);
+            el.appendChild(w);
+          });
+          // Headlights
+          const hl = document.createElement('a-sphere');
+          hl.setAttribute('radius', '0.1');
+          hl.setAttribute('color', '#ffffcc');
+          hl.setAttribute('emissive', '#ffff99');
+          hl.setAttribute('position', '1.1 0.6 0.3');
+          el.appendChild(hl);
+          const hr = document.createElement('a-sphere');
+          hr.setAttribute('radius', '0.1');
+          hr.setAttribute('color', '#ffffcc');
+          hr.setAttribute('emissive', '#ffff99');
+          hr.setAttribute('position', '1.1 0.6 -0.3');
+          el.appendChild(hr);
+          // Tail lights
+          const tl = document.createElement('a-sphere');
+          tl.setAttribute('radius', '0.09');
+          tl.setAttribute('color', '#ff2200');
+          tl.setAttribute('emissive', '#cc0000');
+          tl.setAttribute('position', '-1.1 0.6 0.3');
+          el.appendChild(tl);
+        } else {
+          // Truck
+          // Cab
+          const cab = document.createElement('a-box');
+          cab.setAttribute('width', '1.4');
+          cab.setAttribute('depth', '1.3');
+          cab.setAttribute('height', '1.4');
+          cab.setAttribute('position', '1.4 0.9 0');
+          cab.setAttribute('color', '#e67e22');
+          cab.setAttribute('shadow', 'cast:true');
+          el.appendChild(cab);
+          // Container
+          const cont = document.createElement('a-box');
+          cont.setAttribute('width', '2.8');
+          cont.setAttribute('depth', '1.2');
+          cont.setAttribute('height', '1.5');
+          cont.setAttribute('position', '-0.6 0.95 0');
+          cont.setAttribute('color', '#bdc3c7');
+          el.appendChild(cont);
+          // Wheels
+          [[-1.2, 0.35, 0.7], [0.7, 0.35, 0.7], [-1.2, 0.35, -0.7], [0.7, 0.35, -0.7], [1.5, 0.35, 0.7], [1.5, 0.35, -0.7]].forEach(([wx, wy, wz]) => {
+            const w = document.createElement('a-cylinder');
+            w.setAttribute('radius', '0.35');
+            w.setAttribute('height', '0.2');
+            w.setAttribute('color', '#222');
+            w.setAttribute('rotation', '0 0 90');
+            w.setAttribute('position', `${wx} ${wy} ${wz}`);
+            el.appendChild(w);
+          });
+        }
+
+        // Face the vehicle in the correct direction
+        el.setAttribute('rotation', rotate);
+        // Flip if going reverse direction
+        const goNeg = this.data.dir === 'neg';
+        // Car front is at local +X. Y=90 → front faces -Z (south), Y=-90 → +Z (north),
+        // Y=180 → -X (west), Y=0 → +X (east).
+        let facingY = isEW ? (goNeg ? 180 : 0) : (goNeg ? 90 : -90);
+        el.setAttribute('rotation', `0 ${facingY} 0`);
+      },
+
+      tick: function (t, dt) {
+        if (!this.ready) {
+          this.waitFrames--;
+          if (this.waitFrames <= 0) this.ready = true;
+          return;
+        }
+        const d = this.data;
+        const axis = d.axis;
+        const goNeg = d.dir === 'neg';
+
+        // During pedestrian phase use pedStopZ (before the zebra crossing),
+        // otherwise use normal stopZ (at the stop line).
+        const isPedPhase = currentPhase === 'ped';
+        const effectiveStopZ = isPedPhase ? Math.abs(d.pedStopZ) : Math.abs(d.stopZ);
+
+        // Determine whether this vehicle should stop at all
+        const shouldStop = this.shouldStopAtLight();
+
+        // Stop zone: vehicle front should halt at effectiveStopZ.
+        // Car body length ≈ 2.2. We stop the entity origin (centre) at effectiveStopZ + 1.1.
+        const haltPos = effectiveStopZ + 1.2; // slightly before to guarantee no overlap
+        const atStopLine = goNeg
+          ? (this.pos <= haltPos + 0.5 && this.pos >= haltPos - 4)
+          : (this.pos >= -(haltPos + 0.5) && this.pos <= -(haltPos - 4));
+
+        if (shouldStop && atStopLine) {
+          this.stopped = true;
+        }
+        if (!shouldStop) {
+          this.stopped = false;
+        }
+
+        if (!this.stopped) {
+          const move = d.speed * (dt || 16);
+          this.pos += goNeg ? -move : move;
+        }
+
+        // Wrap around
+        if (goNeg && this.pos < d.to) this.pos = d.from;
+        if (!goNeg && this.pos > d.to) this.pos = d.from;
+
+        // Apply position
+        const pos = this.el.getAttribute('position');
+        if (axis === 'z') {
+          this.el.setAttribute('position', { x: pos.x, y: 0, z: this.pos });
+        } else {
+          this.el.setAttribute('position', { x: this.pos, y: 0, z: pos.z });
+        }
+      },
+
+      shouldStopAtLight: function () {
+        const axis = this.data.axis;
+        // NS traffic (axis=z) stops on: ew, stop, ped
+        // EW traffic (axis=x) stops on: ns, stop, ped
+        if (axis === 'z') {
+          return ['ew', 'stop', 'ped'].includes(currentPhase);
+        } else {
+          return ['ns', 'stop', 'ped'].includes(currentPhase);
+        }
+      }
+    });
+
+    // ==========================================
+    //  PEDESTRIAN COMPONENT
+    // ==========================================
+    AFRAME.registerComponent('pedestrian', {
+      schema: {
+        crossAxis: { default: 'x' },
+        from: { default: 14, type: 'number' },
+        to: { default: -14, type: 'number' },
+        crossZ: { default: 9, type: 'number' },
+        speed: { default: 0.015, type: 'number' }
+      },
+      init: function () {
+        this.pos = this.data.from;
+        this.active = false;
+        this.build();
+        setTimeout(() => { this.active = false; }, 1000);
+      },
+      build: function () {
+        const el = this.el;
+        const colors = ['#e74c3c', '#3498db', '#27ae60', '#9b59b6', '#f39c12'];
+        const c = colors[Math.floor(Math.random() * colors.length)];
+        // Body
+        const body = document.createElement('a-cylinder');
+        body.setAttribute('radius', '0.18');
+        body.setAttribute('height', '0.9');
+        body.setAttribute('position', '0 0.65 0');
+        body.setAttribute('color', c);
+        el.appendChild(body);
+        // Head
+        const head = document.createElement('a-sphere');
+        head.setAttribute('radius', '0.2');
+        head.setAttribute('position', '0 1.3 0');
+        head.setAttribute('color', '#f5cba7');
+        el.appendChild(head);
+        // Legs
+        const ll = document.createElement('a-box');
+        ll.setAttribute('width', '0.15');
+        ll.setAttribute('depth', '0.15');
+        ll.setAttribute('height', '0.55');
+        ll.setAttribute('position', '-0.1 0.17 0');
+        ll.setAttribute('color', '#2c3e50');
+        el.appendChild(ll);
+        const rl = document.createElement('a-box');
+        rl.setAttribute('width', '0.15');
+        rl.setAttribute('depth', '0.15');
+        rl.setAttribute('height', '0.55');
+        rl.setAttribute('position', '0.1 0.17 0');
+        rl.setAttribute('color', '#2c3e50');
+        el.appendChild(rl);
+      },
+      tick: function (t, dt) {
+        // Walk only during ped phase
+        const canWalk = currentPhase === 'ped';
+        if (!canWalk) return;
+
+        const d = this.data;
+        const goNeg = d.from > d.to;
+        const move = d.speed * (dt || 16);
+        this.pos += goNeg ? -move : move;
+
+        // Wrap
+        if (goNeg && this.pos < d.to) this.pos = d.from;
+        if (!goNeg && this.pos > d.to) this.pos = d.from;
+
+        // Apply movement on the correct axis while holding the crossing axis fixed
+        if (d.crossAxis === 'x') {
+          // walks E-W; crossZ fixes the N-S position on the zebra
+          this.el.setAttribute('position', { x: this.pos, y: 0, z: d.crossZ });
+        } else {
+          // walks N-S; crossZ (used as crossX) fixes E-W position
+          this.el.setAttribute('position', { x: d.crossZ, y: 0, z: this.pos });
+        }
+      }
+    });
+
+    // ==========================================
+    //  OFFICER CONTROLLER
+    // ==========================================
+    AFRAME.registerComponent('officer-controller', {
+      schema: {},
+      init: function () {
+        this.phase = 'ns';
+        this.time = 0;
+        this.rotation = 0;
+        this.targetRotation = 0;
+        this.armLAngle = 0;
+        this.armRAngle = 0;
+        this.targetArmL = 0;
+        this.targetArmR = 0;
+        this.bodyBob = 0;
+        // refs
+        this.armL = this.el.querySelector('#arm-l');
+        this.armR = this.el.querySelector('#arm-r');
+        this.armLBox = this.el.querySelector('#arm-l-box');
+        this.armRBox = this.el.querySelector('#arm-r-box');
+        this.legL = this.el.querySelector('#leg-l');
+        this.legR = this.el.querySelector('#leg-r');
+        this.applySignal('ns');
+      },
+      setPhase: function (p) {
+        this.phase = p;
+        this.applySignal(p);
+      },
+      applySignal: function (phase) {
+        // Set target arm angles (Z rotation for raise/lower arm)
+        // Right arm raised = -90 (points up/out), Left arm = 90
+        const signals = {
+          ns: { rz: -55, lz: 55, ry: 0, desc: 'Directing N-S flow' },
+          ew: { rz: -10, lz: 10, ry: 90, desc: 'Directing E-W flow' },
+          stop: { rz: -90, lz: 90, ry: 0, desc: 'Commanding ALL STOP' },
+          ped: { rz: -80, lz: 10, ry: 45, desc: 'Pedestrian crossing signal' },
+        };
+        const s = signals[phase] || signals.ns;
+        this.targetArmL = s.lz;
+        this.targetArmR = s.rz;
+        this.targetRotation = s.ry;
+      },
+      tick: function (t, dt) {
+        const dS = (dt || 16) / 1000;
+        this.time += dS;
+
+        // Lerp arm angles
+        const lerpSpeed = 4 * dS;
+        this.armLAngle += (this.targetArmL - this.armLAngle) * lerpSpeed;
+        this.armRAngle += (this.targetArmR - this.armRAngle) * lerpSpeed;
+
+        // Body rotation lerp
+        this.rotation += (this.targetRotation - this.rotation) * lerpSpeed;
+
+        // Periodic body sway / bob
+        const bob = Math.sin(this.time * 2) * 0.03;
+        const sway = Math.sin(this.time * 1.2) * 1.5;
+
+        // Apply to officer entity
+        this.el.setAttribute('rotation', `0 ${this.rotation + sway} 0`);
+        this.el.object3D.position.y = bob;
+
+        // Apply arm rotations
+        if (this.armL) this.armL.setAttribute('rotation', `${this.armLAngle} 0 0`);
+        if (this.armR) this.armR.setAttribute('rotation', `${this.armRAngle} 0 0`);
+
+        // Leg walk animation (when ped phase)
+        if (this.phase === 'ped') {
+          const legSwing = Math.sin(this.time * 4) * 18;
+          if (this.legL) this.legL.setAttribute('rotation', `${legSwing} 0 0`);
+          if (this.legR) this.legR.setAttribute('rotation', `${-legSwing} 0 0`);
+        } else {
+          // Return legs to neutral
+          if (this.legL) this.legL.setAttribute('rotation', '0 0 0');
+          if (this.legR) this.legR.setAttribute('rotation', '0 0 0');
+        }
+      }
+    });
+
+    // ==========================================
+    //  GESTURE CONTROLLER COMPONENT
+    // ==========================================
+    AFRAME.registerComponent('gesture-controller', {
+      schema: {},
+      init: function () {
+        this.RAISE_Y = 1.35;   // wrist world-Y above this = hand raised
+        this.LOWER_Y = 1.15;   // both below this = idle (no phase change)
+        this.PINCH_DIST = 0.04;   // metres between thumb & index tips for pinch
+        this.HOLD_TIME = 0.55;   // seconds a gesture must be held before firing
+        this.pendingPhase = null;
+        this.holdTimer = 0;
+        this.lastFiredPhase = null;
+        this.leftHand = null;
+        this.rightHand = null;
+      },
+
+      tick: function (t, dt) {
+        if (!vrActive) return;
+        // Lazy-resolve hand entity references
+        if (!this.leftHand) this.leftHand = document.getElementById('left-hand');
+        if (!this.rightHand) this.rightHand = document.getElementById('right-hand');
+        if (!this.leftHand || !this.rightHand) return;
+
+        const lComp = this.leftHand.components['hand-tracking-controls'];
+        const rComp = this.rightHand.components['hand-tracking-controls'];
+        if (!lComp || !rComp) return;
+
+        // Helper: get world-Y of a joint
+        const getWristY = (comp) => {
+          try {
+            const pose = comp.getJointPose('wrist');
+            return pose ? pose.transform.position.y : -Infinity;
+          } catch (e) { return -Infinity; }
+        };
+
+        // Helper: detect pinch (thumb tip vs index finger tip distance)
+        const isPinching = (comp, hand) => {
+          try {
+            const thumb = comp.getJointPose('thumb-tip');
+            const index = comp.getJointPose('index-finger-tip');
+            if (!thumb || !index) return false;
+            const tp = thumb.transform.position;
+            const ip = index.transform.position;
+            const dx = tp.x - ip.x, dy = tp.y - ip.y, dz = tp.z - ip.z;
+            return Math.sqrt(dx * dx + dy * dy + dz * dz) < this.PINCH_DIST;
+          } catch (e) { return false; }
+        };
+
+        const rY = getWristY(rComp);
+        const lY = getWristY(lComp);
+        const rRaised = rY > this.RAISE_Y;
+        const lRaised = lY > this.RAISE_Y;
+        const rPinch = isPinching(rComp, 'right');
+
+        // Determine intended gesture
+        let intended = null;
+        if (rPinch) {
+          intended = 'ped';
+        } else if (rRaised && lRaised) {
+          intended = 'stop';
+        } else if (rRaised && !lRaised) {
+          intended = 'ns';
+        } else if (lRaised && !rRaised) {
+          intended = 'ew';
+        }
+
+        const dS = (dt || 16) / 1000;
+        if (intended !== null) {
+          if (intended === this.pendingPhase) {
+            this.holdTimer += dS;
+            if (this.holdTimer >= this.HOLD_TIME && intended !== this.lastFiredPhase) {
+              setPhase(intended);
+              this.lastFiredPhase = intended;
+            }
+          } else {
+            this.pendingPhase = intended;
+            this.holdTimer = 0;
+          }
+        } else {
+          this.pendingPhase = null;
+          this.holdTimer = 0;
+          this.lastFiredPhase = null;
+        }
+      }
+    });
+
+    // ==========================================
+    //  INIT ON SCENE LOAD
+    // ==========================================
+    document.querySelector('a-scene').addEventListener('loaded', () => {
+      setPhase('ns');
+      startAutoCycle();
+
+      const scene = document.querySelector('a-scene');
+
+      scene.addEventListener('enter-vr', () => {
+        vrActive = true;
+        stopAutoCycle();
+        // Hide the third-person officer model — user IS the officer
+        const officer = document.getElementById('officer');
+        if (officer) officer.setAttribute('visible', false);
+        // Show VR HUD
+        const vrHud = document.getElementById('vr-hud');
+        if (vrHud) vrHud.setAttribute('visible', true);
+        // Update HUD with current phase
+        setPhase(currentPhase);
+      });
+
+      scene.addEventListener('exit-vr', () => {
+        vrActive = false;
+        // Restore officer body
+        const officer = document.getElementById('officer');
+        if (officer) officer.setAttribute('visible', true);
+        // Hide VR HUD
+        const vrHud = document.getElementById('vr-hud');
+        if (vrHud) vrHud.setAttribute('visible', false);
+        // Resume auto-cycle
+        startAutoCycle();
+      });
+    });
+  </script>
+</body>
+
+</html>
