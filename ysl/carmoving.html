@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Car Moving Forward</title>
+<script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+</head>
+
+<body>
+
+<a-scene>
+
+  <!-- Sky -->
+  <a-sky color="#87CEEB"></a-sky>
+
+  <!-- Road -->
+  <a-plane position="0 0 -20"
+           rotation="-90 0 0"
+           width="6"
+           height="60"
+           color="gray">
+  </a-plane>
+
+  <!-- Moving Car -->
+  <a-entity position="0 0 10"
+            animation="property: position;
+                       to: 0 0 -40;
+                       dur: 6000;
+                       loop: true">
+
+    <!-- Car Body -->
+    <a-box position="0 0.5 0" depth="2" height="0.5" width="1.5" color="red"></a-box>
+
+    <!-- Car Top -->
+    <a-box position="0 0.9 -0.2" depth="1.2" height="0.5" width="1.2" color="red"></a-box>
+
+    <!-- Wheels -->
+    <a-cylinder position="-0.7 0.2 0.9" radius="0.25" height="0.2" rotation="90 0 0" color="black"></a-cylinder>
+    <a-cylinder position="0.7 0.2 0.9" radius="0.25" height="0.2" rotation="90 0 0" color="black"></a-cylinder>
+    <a-cylinder position="-0.7 0.2 -0.9" radius="0.25" height="0.2" rotation="90 0 0" color="black"></a-cylinder>
+    <a-cylinder position="0.7 0.2 -0.9" radius="0.25" height="0.2" rotation="90 0 0" color="black"></a-cylinder>
+
+  </a-entity>
+
+  <!-- Camera -->
+  <a-camera position="0 2 5"></a-camera>
+
+</a-scene>
+
+</body>
+</html>
