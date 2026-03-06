@@ -1,0 +1,347 @@
+Conversation opened. 1 unread message.
+
+Skip to content
+Using Gmail with screen readers
+1 of 87
+(no subject)
+Inbox
+
+Athena <athenapdinesh@gmail.com>
+15:05 (26 minutes ago)
+to me
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VR Traffic Police Training</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    #hud {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid #00ff88;
+      border-radius: 12px;
+      padding: 10px 24px;
+      color: #00ff88;
+      font-size: 15px;
+      z-index: 999;
+      text-align: center;
+      pointer-events: none;
+      backdrop-filter: blur(6px);
+    }
+
+    #hud h2 {
+      margin: 0 0 4px;
+      font-size: 17px;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+
+    #panel {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid #0af;
+      border-radius: 14px;
+      padding: 12px 28px;
+      color: #0af;
+      font-size: 14px;
+      z-index: 999;
+      text-align: center;
+      backdrop-filter: blur(6px);
+      min-width: 320px;
+    }
+
+    #panel .status-label {
+      font-weight: bold;
+      color: #fff;
+    }
+
+    #panel #officer-status {
+      font-size: 15px;
+      color: #ffe033;
+      margin-top: 4px;
+    }
+
+    #controls {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 999;
+    }
+
+    #controls button {
+      background: rgba(0, 0, 0, 0.7);
+      color: #00ff88;
+      border: 1px solid #00ff88;
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s;
+    }
+
+    #controls button:hover {
+      background: rgba(0, 255, 136, 0.2);
+    }
+
+    #legend {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid #555;
+      border-radius: 10px;
+      padding: 10px 16px;
+      color: #ccc;
+      font-size: 12px;
+      z-index: 999;
+      backdrop-filter: blur(4px);
+    }
+
+    #legend div {
+      margin: 3px 0;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HUD -->
+  <div id="hud">
+    <h2>🚔 VR TRAFFIC POLICE TRAINING</h2>
+    <span id="phase-label">Phase: Initializing...</span>
+  </div>
+
+  <!-- Bottom Panel -->
+  <div id="panel">
+    <div class="status-label">Officer Command</div>
+    <div id="officer-status">Officer is taking position...</div>
+    <div style="margin-top:6px; color:#aaa; font-size:12px;">Use mouse/touch to look around &bull; VR headset supported
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div id="controls">
+    <button onclick="setPhase('ns')">▶ Allow N-S Traffic</button>
+    <button onclick="setPhase('ew')">▶ Allow E-W Traffic</button>
+    <button onclick="setPhase('stop')">✋ STOP ALL</button>
+    <button onclick="setPhase('ped')">🚶 Pedestrian Crossing</button>
+  </div>
+
+  <!-- Legend -->
+  <div id="legend">
+    <div><span class="dot" style="background:#e74c3c"></span>Stop / Red Light</div>
+    <div><span class="dot" style="background:#f1c40f"></span>Caution / Amber</div>
+    <div><span class="dot" style="background:#2ecc71"></span>Go / Green Light</div>
+    <div><span class="dot" style="background:#3498db"></span>Pedestrian Walk</div>
+    <hr style="border-color:#444; margin:6px 0">
+    <div style="color:#ffe033; font-size:11px; font-weight:bold;">VR Hand Gestures</div>
+    <div>✋ Right raised → N-S GO</div>
+    <div>🤚 Left raised → E-W GO</div>
+    <div>🙌 Both raised → ALL STOP</div>
+    <div>🤌 Right pinch → 🚶 Pedestrian</div>
+  </div>
+
+  <a-scene fog="type: linear; color: #b0d4ef; near: 60; far: 120" shadow="type: pcf" vr-mode-ui="enabled: true">
+
+    <!-- ======= SKY & ENVIRONMENT ======= -->
+    <a-sky color="#87CEEB"></a-sky>
+
+    <!-- Sun -->
+    <a-light type="directional" position="10 20 5" intensity="1.0" color="#ffffee" cast-shadow="true"></a-light>
+    <a-light type="ambient" color="#aaccff" intensity="0.6"></a-light>
+
+    <!-- ======= GROUND ======= -->
+    <a-plane position="0 0 0" rotation="-90 0 0" width="120" height="120" color="#556B2F"
+      shadow="receive: true"></a-plane>
+
+    <!-- ======= ROADS ======= -->
+    <!-- N-S road -->
+    <a-plane position="0 0.01 0" rotation="-90 0 0" width="12" height="120" color="#444"
+      shadow="receive: true"></a-plane>
+    <!-- E-W road -->
+    <a-plane position="0 0.01 0" rotation="-90 0 0" width="120" height="12" color="#444"
+      shadow="receive: true"></a-plane>
+
+    <!-- Centre box -->
+    <a-plane position="0 0.015 0" rotation="-90 0 0" width="12" height="12" color="#444"></a-plane>
+
+    <!-- ======= LANE MARKINGS (dashed centre lines) ======= -->
+    <!-- NS dashes -->
+    <a-entity id="ns-dashes"></a-entity>
+    <!-- EW dashes -->
+    <a-entity id="ew-dashes"></a-entity>
+
+    <!-- ======= ZEBRA CROSSINGS ======= -->
+    <!-- North zebra: sits between stop-line (7.5) and sidewalk (12), centred at 9.75 -->
+    <a-entity id="zebra-north" position="0 0.02 9.75"></a-entity>
+    <!-- South zebra -->
+    <a-entity id="zebra-south" position="0 0.02 -9.75"></a-entity>
+    <!-- East zebra (rotate 90 Y so stripes run N-S across E road) -->
+    <a-entity id="zebra-east" position="9.75 0.02 0" rotation="0 90 0"></a-entity>
+    <!-- West zebra -->
+    <a-entity id="zebra-west" position="-9.75 0.02 0" rotation="0 90 0"></a-entity>
+
+    <!-- ======= STOP LINES (at ±7.5, marking the junction mouth) ======= -->
+    <a-plane position="0 0.018  7.5" rotation="-90 0 0" width="12" height="0.4" color="#fff" opacity="0.9"></a-plane>
+    <a-plane position="0 0.018 -7.5" rotation="-90 0 0" width="12" height="0.4" color="#fff" opacity="0.9"></a-plane>
+    <a-plane position=" 7.5 0.018 0" rotation="-90 0 0" width="0.4" height="12" color="#fff" opacity="0.9"></a-plane>
+    <a-plane position="-7.5 0.018 0" rotation="-90 0 0" width="0.4" height="12" color="#fff" opacity="0.9"></a-plane>
+
+    <!-- ======= TRAFFIC LIGHTS ======= -->
+    <!-- NE Corner -->
+    <a-entity id="tl-ne" position="7 0 7" traffic-light="dir:ne"></a-entity>
+    <!-- NW Corner -->
+    <a-entity id="tl-nw" position="-7 0 7" traffic-light="dir:nw"></a-entity>
+    <!-- SE Corner -->
+    <a-entity id="tl-se" position="7 0 -7" traffic-light="dir:se"></a-entity>
+    <!-- SW Corner -->
+    <a-entity id="tl-sw" position="-7 0 -7" traffic-light="dir:sw"></a-entity>
+
+    <!-- ======= BUILDINGS (background) ======= -->
+    <!-- NE -->
+    <a-box position="22 5 22" width="12" depth="12" height="14" color="#8B7355"
+      shadow="cast:true; receive:true"></a-box>
+    <a-box position="22 8 22" width="10" depth="10" height="8" color="#A0907A"></a-box>
+    <!-- NW -->
+    <a-box position="-22 4 22" width="14" depth="10" height="10" color="#6B7B8D"
+      shadow="cast:true; receive:true"></a-box>
+    <!-- SE -->
+    <a-box position="22 6 -22" width="10" depth="14" height="16" color="#7A8B6B"
+      shadow="cast:true; receive:true"></a-box>
+    <!-- SW -->
+    <a-box position="-22 5 -22" width="12" depth="12" height="12" color="#8D7A6B"
+      shadow="cast:true; receive:true"></a-box>
+    <!-- Extra buildings -->
+    <a-box position="30 3 5" width="8" depth="8" height="8" color="#9B8B7A"></a-box>
+    <a-box position="-30 5 -5" width="10" depth="8" height="12" color="#7A8B9B"></a-box>
+    <a-box position="5 2 30" width="8" depth="12" height="6" color="#8B9B7A"></a-box>
+    <a-box position="-5 4 -30" width="12" depth="8" height="10" color="#9B7A8B"></a-box>
+
+    <!-- ======= TREES ======= -->
+    <a-entity id="tree1" position="14 0 14">
+      <a-cylinder height="2" radius="0.2" color="#5D4037" position="0 1 0"></a-cylinder>
+      <a-sphere radius="2" color="#2e7d32" position="0 3.5 0"></a-sphere>
+    </a-entity>
+    <a-entity id="tree2" position="-14 0 14">
+      <a-cylinder height="2" radius="0.2" color="#5D4037" position="0 1 0"></a-cylinder>
+      <a-sphere radius="2" color="#388e3c" position="0 3.5 0"></a-sphere>
+    </a-entity>
+    <a-entity id="tree3" position="14 0 -14">
+      <a-cylinder height="2" radius="0.2" color="#5D4037" position="0 1 0"></a-cylinder>
+      <a-sphere radius="2" color="#1b5e20" position="0 3.5 0"></a-sphere>
+    </a-entity>
+    <a-entity id="tree4" position="-14 0 -14">
+      <a-cylinder height="2" radius="0.2" color="#5D4037" position="0 1 0"></a-cylinder>
+      <a-sphere radius="2" color="#33691e" position="0 3.5 0"></a-sphere>
+    </a-entity>
+    <a-entity position="20 0 -2">
+      <a-cylinder height="2.5" radius="0.2" color="#5D4037" position="0 1.25 0"></a-cylinder>
+      <a-sphere radius="1.5" color="#2e7d32" position="0 3.5 0"></a-sphere>
+    </a-entity>
+    <a-entity position="-20 0 2">
+      <a-cylinder height="2.5" radius="0.2" color="#5D4037" position="0 1.25 0"></a-cylinder>
+      <a-sphere radius="1.5" color="#43a047" position="0 3.5 0"></a-sphere>
+    </a-entity>
+
+    <!-- ======= SIDEWALKS ======= -->
+    <a-plane position="16 0.005 0" rotation="-90 0 0" width="8" height="120" color="#bdbdbd"></a-plane>
+    <a-plane position="-16 0.005 0" rotation="-90 0 0" width="8" height="120" color="#bdbdbd"></a-plane>
+    <a-plane position="0 0.005 16" rotation="-90 0 0" width="120" height="8" color="#bdbdbd"></a-plane>
+    <a-plane position="0 0.005 -16" rotation="-90 0 0" width="120" height="8" color="#bdbdbd"></a-plane>
+
+    <!-- ======= POLICE OFFICER ======= -->
+    <!-- Officer stands at centre of junction, faces users -->
+    <a-entity id="officer" position="0 0 0" rotation="0 0 0" officer-controller>
+      <!-- Legs -->
+      <a-box id="leg-l" position="-0.18 0.5 0" width="0.22" depth="0.22" height="1.0" color="#1a237e"></a-box>
+      <a-box id="leg-r" position=" 0.18 0.5 0" width="0.22" depth="0.22" height="1.0" color="#1a237e"></a-box>
+      <!-- Torso -->
+      <a-box position="0 1.35 0" width="0.6" depth="0.35" height="0.8" color="#1565c0"></a-box>
+      <!-- Badge -->
+      <a-cylinder position="0 1.5 0.18" radius="0.07" height="0.04" color="#ffd700" rotation="90 0 0"></a-cylinder>
+      <!-- Left Arm -->
+      <a-entity id="arm-l">
+        <a-box position="-0.48 1.4 0" width="0.22" depth="0.22" height="0.75" color="#1565c0" rotation="0 0 0"
+          id="arm-l-box"></a-box>
+        <!-- Glove -->
+        <a-sphere position="-0.48 1.02 0" radius="0.12" color="#fff"></a-sphere>
+      </a-entity>
+      <!-- Right Arm -->
+      <a-entity id="arm-r">
+        <a-box position="0.48 1.4 0" width="0.22" depth="0.22" height="0.75" color="#1565c0" rotation="0 0 0"
+          id="arm-r-box"></a-box>
+        <!-- Glove -->
+        <a-sphere position="0.48 1.02 0" radius="0.12" color="#fff"></a-sphere>
+      </a-entity>
+      <!-- Neck -->
+      <a-cylinder position="0 1.82 0" radius="0.1" height="0.15" color="#e8b89a"></a-cylinder>
+      <!-- Head -->
+      <a-sphere position="0 2.1 0" radius="0.25" color="#e8b89a"></a-sphere>
+      <!-- Cap (hat) -->
+      <a-cylinder position="0 2.35 0" radius="0.28" height="0.08" color="#0d1b2a"></a-cylinder>
+      <a-cylinder position="0 2.42 0" radius="0.2" height="0.2" color="#1a237e"></a-cylinder>
+      <a-box position="0 2.35 -0.28" width="0.6" depth="0.04" height="0.04" color="#0d1b2a"></a-box>
+      <!-- Whistle -->
+      <a-cylinder position="0.05 1.92 0.18" radius="0.025" height="0.12" color="#ffd700" rotation="90 0 0"></a-cylinder>
+      <!-- Belt -->
+      <a-box position="0 0.95 0" width="0.64" depth="0.38" height="0.1" color="#ffd700"></a-box>
+    </a-entity>
+
+    <!-- ======= VEHICLES ======= -->
+    <!-- North approaching (travels south: +Z to -Z on lane x=-3)
+         stopZ:9 → car halts at Z≈9, well before the stop line at 7.5 -->
+    <a-entity id="car-n1" position="-3 0 55"
+      vehicle="lane:ns-left; from:55; to:-55; speed:0.04; stopZ:9; pedStopZ:12; dir:neg"></a-entity>
+    <!-- Second north car staggered -->
+    <a-entity id="car-n2" position="-3 0 30"
+      vehicle="lane:ns-left; from:55; to:-55; speed:0.033; stopZ:9; pedStopZ:12; dir:neg"></a-entity>
+
+    <!-- South approaching (travels north: -Z to +Z on lane x=3) -->
+    <a-entity id="car-s1" position="3 0 -55"
+      vehicle="lane:ns-right; from:-55; to:55; speed:0.038; stopZ:-9; pedStopZ:-12; dir:pos"></a-entity>
+    <a-entity id="car-s2" position="3 0 -30"
+      vehicle="lane:ns-right; from:-55; to:55; speed:0.03; stopZ:-9; pedStopZ:-12; dir:pos"></a-entity>
+
+    <!-- East approaching (travels west: +X to -X on lane z=-3)
+         stopZ:9 → car halts at X≈9, before the E stop line at 7.5 -->
+    <a-entity id="car-e1" position="55 0 -3"
+      vehicle="lane:ew-right; from:55; to:-55; speed:0.036; stopZ:9; pedStopZ:12; dir:neg; axis:x"></a-entity>
+    <a-entity id="car-e2" position="30 0 -3"
+      vehicle="lane:ew-right; from:55; to:-55; speed:0.028; stopZ:9; pedStopZ:12; dir:neg; axis:x"></a-entity>
+
+    <!-- West approaching (travels east: -X to +X on lane z=3)
+         stopZ:-9 → car halts at X≈-9 before the W stop line at -7.5 -->
+    <a-entity id="car-w1" position="-55 0 3"
+      
+...
+
+[Message clipped]  View entire message
